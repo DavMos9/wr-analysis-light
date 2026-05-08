@@ -1,0 +1,77 @@
+"""normalizers/lemmy.py — Normalizer per Lemmy API v3 (source_id: "lemmy"). Posts e Comments."""
+
+from __future__ import annotations
+
+from models import RawRecord, Record
+from normalizers.registry import register
+from normalizers.utils import to_date, to_url, first_non_empty
+
+
+def _normalize(raw: RawRecord) -> Record:
+    p = raw.payload
+    content_type = p.get("_content_type", "Posts")
+    instance = p.get("_instance", "lemmy.world")
+
+    if content_type == "Comments":
+        return _normalize_comment(raw, p, instance)
+    return _normalize_post(raw, p, instance)
+
+
+def _normalize_post(
+    raw: RawRecord,
+    p: dict,
+    instance: str,
+) -> Record:
+    """Normalizza un post Lemmy."""
+    post = p.get("post", {})
+
+    title = post.get("name", "")
+    body = post.get("body", "")
+    text = body if body else title  # link post senza body: usa il titolo
+
+    url = to_url(post.get("ap_id", ""))
+
+    return Record(
+        source=raw.source,
+        title=title,
+        text=text,
+        date=to_date(post.get("published")),
+        url=url,
+        query=raw.query,
+        target=raw.target,
+        language=None,
+        domain=instance,
+        retrieved_at=raw.retrieved_at,
+    )
+
+
+def _normalize_comment(
+    raw: RawRecord,
+    p: dict,
+    instance: str,
+) -> Record:
+    """Normalizza un commento Lemmy."""
+    comment = p.get("comment", {})
+    parent_post = p.get("post", {})
+
+    parent_title = parent_post.get("name", "")
+    title = f"[Comment] {parent_title}" if parent_title else ""
+
+    text = comment.get("content", "")
+    url = to_url(comment.get("ap_id", ""))
+
+    return Record(
+        source=raw.source,
+        title=title,
+        text=text,
+        date=to_date(comment.get("published")),
+        url=url,
+        query=raw.query,
+        target=raw.target,
+        language=None,
+        domain=instance,
+        retrieved_at=raw.retrieved_at,
+    )
+
+
+register("lemmy", _normalize)

@@ -1,0 +1,35 @@
+[project]
+name = "wr-analysis-light"
+version = "0.1.0"
+description = "Pipeline leggera per Web Reputational Analysis — raccolta, normalizzazione ed esportazione dati da fonti web."
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "python-dateutil>=2.8",
+    "python-dotenv>=1.0",
+    "Wikipedia-API>=0.7",
+]
+
+[project.optional-dependencies]
+nlp = [
+    "langdetect>=1.0.9",
+    "transformers>=4.40",
+    "torch>=2.2",
+    "sentencepiece>=0.1.99",
+    "protobuf>=3.20",
+]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+wra-light = "main:main"
+
+[tool.setuptools.packages.find]
+exclude = ["data*", "tests*", "docs*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
