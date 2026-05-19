@@ -17,6 +17,12 @@ _FINAL_DIR = "data/final"
 _RUN_FIELDS = ("date_from", "date_until", "scan_timestamp")
 
 
+def _date_range(records: list[Record]) -> tuple[str | None, str | None]:
+    """Restituisce (min_date, max_date) calcolati sui record con data non nulla."""
+    dates = [r.date for r in records if r.date]
+    return (min(dates) if dates else None, max(dates) if dates else None)
+
+
 class CsvExporter:
     """Scrive il CSV dai record già deduplicati forniti dal JsonExporter. Sempre overwrite."""
 
@@ -25,15 +31,17 @@ class CsvExporter:
         self._final_dir.mkdir(parents=True, exist_ok=True)
 
     def export(self, records: list[Record], target: str, topic: str,
-               date_from: str, date_until: str,
                scan_timestamp: str = "") -> None:
         """
         Scrive il CSV. Ogni riga include i campi record + date_from, date_until,
-        scan_timestamp — metadati del run corrente utili come contesto di ricerca.
+        scan_timestamp. date_from e date_until sono il range effettivo dei dati
+        (min/max della colonna date sui record), non i parametri CLI del run.
         Il file è unico per (target, topic) e viene riscritto a ogni run.
         """
         filename = build_filename(target, topic) + ".csv"
         path = self._final_dir / filename
+
+        date_from, date_until = _date_range(records)
 
         fieldnames = list(Record.csv_fields()) + list(_RUN_FIELDS)
         run_meta = {

@@ -144,9 +144,8 @@ def main() -> None:
     )
 
     # CSV e summary derivano dal JSON già deduplicato.
-    # date_from/date_until nel CSV sono metadato del run corrente.
-    csv_exporter.export(final_records, args.target, args.topic, args.date_from, effective_date_until,
-                        scan_timestamp=ts)
+    # date_from/date_until nel CSV sono il range effettivo dei dati (min/max della colonna date).
+    csv_exporter.export(final_records, args.target, args.topic, scan_timestamp=ts)
     summary_exporter.export(
         final_records, args.target, args.topic,
         run_date, ts,
