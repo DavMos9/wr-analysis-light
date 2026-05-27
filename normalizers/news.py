@@ -18,7 +18,9 @@ def _normalize(raw: RawRecord) -> Record:
         url=url,
         query=raw.query,
         target=raw.target,
-        language=first_non_empty(p.get("language")),
+        # NewsAPI non include 'language' nella risposta per articolo (è un param di richiesta):
+        # first_non_empty(None) ritorna "" che viola il contratto str | None del modello.
+        language=p.get("language") or None,
         domain=to_domain(url) or first_non_empty(
             p.get("source", {}).get("name") if isinstance(p.get("source"), dict) else None
         ),

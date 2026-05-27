@@ -26,8 +26,11 @@ def _normalize_post(
     post = p.get("post", {})
 
     title = post.get("name", "")
-    body = post.get("body", "")
-    text = body if body else title  # link post senza body: usa il titolo
+    body  = post.get("body", "")
+    # Per i link post senza body, NON usare il titolo come testo:
+    # due post distinti con lo stesso titolo verrebbero deduplicati come identici.
+    # Usiamo stringa vuota; il cleaner filtra i record privi di testo significativo.
+    text  = body or ""
 
     url = to_url(post.get("ap_id", ""))
 

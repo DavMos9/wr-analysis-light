@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from email.utils import parsedate_to_datetime
 
 import requests
 
@@ -59,7 +60,16 @@ class BbcCollector(BaseCollector):
                 seen_urls.add(url)
                 unique.append(item)
 
-        unique.sort(key=lambda x: x.get("pubDate") or "", reverse=True)
+        # pubDate è in formato RFC 2822 ("Mon, 26 May 2026 15:30:00 GMT"):
+        # l'ordinamento lessicografico sarebbe scorretto — usiamo parsedate_to_datetime.
+        def _pub_ts(item: dict):
+            try:
+                return parsedate_to_datetime(item["pubDate"])
+            except Exception:
+                import datetime
+                return datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+
+        unique.sort(key=_pub_ts, reverse=True)
         unique = unique[:max_results]
 
         records = [self._make_raw(target, query, item) for item in unique]
